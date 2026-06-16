@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Custom Map</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <button class="hamburger-btn" id="hamburgerMenuBtn" aria-label="Open Menu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+    </button>
+
+    <div class="side-drawer" id="sideMenuDrawer">
+        <button class="close-drawer" id="closeDrawerBtn">&times;</button>
+        <h2>Map Toolkit</h2>
+        
+        <div class="drawer-content">
+            <div class="drawer-section">
+                <h3>🔍 Filter Pins by Color</h3>
+                <select id="filterColorSelect" class="select-drawer">
+                    <option value="all">🎨 Show All Colors</option>
+                    <option value="#dc2626">🔴 Red Only</option>
+                    <option value="#2563eb">🔵 Blue Only</option>
+                    <option value="#16a34a">🟢 Green Only</option>
+                    <option value="#ca8a04">🟡 Yellow Only</option>
+                    <option value="#9333ea">🟣 Purple Only</option>
+                </select>
+            </div>
+
+            <hr class="drawer-divider">
+
+            <button id="exportMarkersBtn" class="btn-drawer">📤 Export Markers</button>
+            <button id="importMarkersBtn" class="btn-drawer">📥 Import Markers</button>
+            
+            <hr class="drawer-divider">
+            
+            <button id="removeAllPins" class="btn-drawer btn-drawer-danger">⚠️ Remove All Pins</button>
+        </div>
+        <input type="file" id="importFileInput" accept=".json">
+    </div>
+
+    <div class="map-viewport" id="mapViewport">
+        <div class="map-container" id="mapContainer">
+            <img src="images/map.png" alt="World Map" id="mapImage" draggable="false">
+        </div>
+    </div>
+
+    <div class="zoom-controls">
+        <button id="zoomIn">+</button>
+        <button id="zoomOut">-</button>
+    </div>
+
+    <div class="modal-overlay" id="formModal">
+        <div class="modal-card">
+            <button class="close-modal" id="closeFormModal">&times;</button>
+            <h2>Add New Location Marker</h2>
+            <form id="markerForm">
+                
+                <div class="form-section">
+                    <h3>Select Marker Color</h3>
+                    <div class="color-picker">
+                        <label class="color-option">
+                            <input type="radio" name="markerColor" value="#dc2626" checked>
+                            <span class="color-dot" style="background-color: #dc2626;"></span>
+                        </label>
+                        <label class="color-option">
+                            <input type="radio" name="markerColor" value="#2563eb">
+                            <span class="color-dot" style="background-color: #2563eb;"></span>
+                        </label>
+                        <label class="color-option">
+                            <input type="radio" name="markerColor" value="#16a34a">
+                            <span class="color-dot" style="background-color: #16a34a;"></span>
+                        </label>
+                        <label class="color-option">
+                            <input type="radio" name="markerColor" value="#ca8a04">
+                            <span class="color-dot" style="background-color: #ca8a04;"></span>
+                        </label>
+                        <label class="color-option">
+                            <input type="radio" name="markerColor" value="#9333ea">
+                            <span class="color-dot" style="background-color: #9333ea;"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Location Details</h3>
+                    <input type="text" id="locTitle" placeholder="Location Title" required>
+                    <textarea id="locDesc" placeholder="Location Description (Optional)" rows="3"></textarea>
+                    
+                    <div class="upload-container">
+                        <label class="file-label" id="locLabel" for="locImg">Upload Location Image (Optional)</label>
+                        <input type="file" id="locImg" accept="image/*">
+                        <div class="file-feedback" id="locFeedback">
+                            <span class="file-name">No file selected</span>
+                            <button type="button" class="btn-remove-file" id="removeLocImg">&times;</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Solution Details</h3>
+                    <input type="text" id="solTitle" placeholder="Solution Title (Optional)">
+                    <textarea id="solDesc" placeholder="Solution Description (Optional)" rows="3"></textarea>
+                    
+                    <div class="upload-container">
+                        <label class="file-label" id="solLabel" for="solImg">Upload Solution Image (Optional)</label>
+                        <input type="file" id="solImg" accept="image/*">
+                        <div class="file-feedback" id="solFeedback">
+                            <span class="file-name">No file selected</span>
+                            <button type="button" class="btn-remove-file" id="removeSolImg">&times;</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Place Marker</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="viewModal">
+        <div class="modal-card detail-card">
+            <div class="modal-header">
+                <button class="btn-delete" id="deletePinBtn">Remove Pin</button>
+                <button class="close-modal" id="closeViewModal">&times;</button>
+            </div>
+            
+            <div class="detail-content">
+                <div class="detail-block">
+                    <h2 id="viewLocTitle">Location Title</h2>
+                    <img id="viewLocImg" src="" alt="Location Image" class="display-img">
+                    <p id="viewLocDesc">Location description goes here...</p>
+                </div>
+                
+                <hr class="divider">
+
+                <div class="detail-block" id="viewSolBlock">
+                    <h2 id="viewSolTitle">Solution Title</h2>
+                    <img id="viewSolImg" src="" alt="Solution Image" class="display-img">
+                    <p id="viewSolDesc">Solution description goes here...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="lightbox-overlay" id="lightboxOverlay">
+        <button class="close-lightbox" id="closeLightboxBtn" aria-label="Close Fullscreen View">&times;</button>
+        <img src="" alt="Fullscreen Preview" id="lightboxImg">
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

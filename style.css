@@ -1,0 +1,429 @@
+/* --- Global Resets & Variables --- */
+:root {
+    --primary: #2563eb;
+    --danger: #dc2626;
+    --bg-overlay: rgba(31, 41, 55, 0.65);
+    --surface: #ffffff;
+    --text: #1f2937;
+    --radius: 12px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #111827;
+}
+
+/* --- Hamburger Menu Toggle Style --- */
+.hamburger-btn {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    width: 48px;
+    height: 48px;
+    background: var(--surface);
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    cursor: pointer;
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    transition: var(--transition);
+}
+
+.hamburger-btn:hover { transform: scale(1.05); }
+.hamburger-btn:active { transform: scale(0.95); }
+
+.hamburger-btn .bar {
+    width: 20px;
+    height: 2.5px;
+    background-color: var(--text);
+    border-radius: 2px;
+    transition: var(--transition);
+}
+
+/* --- Slide-Out Drawer Navigation Menu --- */
+.side-drawer {
+    position: fixed;
+    top: 0;
+    left: -320px;
+    width: 300px;
+    height: 100vh;
+    background: var(--surface);
+    box-shadow: 4px 0 25px rgba(0,0,0,0.25);
+    z-index: 95;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    transition: var(--transition);
+}
+
+.side-drawer.active { left: 0; }
+
+.close-drawer {
+    align-self: flex-end;
+    background: #f3f4f6;
+    border: none;
+    font-size: 24px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    transition: var(--transition);
+}
+
+.close-drawer:hover { background: #e5e7eb; }
+
+.side-drawer h2 {
+    font-size: 1.5rem;
+    color: var(--text);
+    margin-bottom: 24px;
+    border-bottom: 2px solid #f3f4f6;
+    padding-bottom: 12px;
+}
+
+.drawer-content { display: flex; flex-direction: column; gap: 12px; }
+.drawer-section { display: flex; flex-direction: column; gap: 4px; }
+
+.select-drawer {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #f9fafb;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: var(--transition);
+}
+
+.select-drawer:focus { border-color: var(--primary); background: #fff; }
+
+.btn-drawer {
+    width: 100%;
+    padding: 12px 16px;
+    background: #f3f4f6;
+    color: var(--text);
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-drawer:hover { background: #e5e7eb; transform: translateX(4px); }
+.btn-drawer-danger { background: #fee2e2; color: var(--danger); }
+.btn-drawer-danger:hover { background: var(--danger); color: white; }
+
+.drawer-divider { border: 0; height: 1px; background: #e5e7eb; margin: 12px 0; }
+#importFileInput { display: none; }
+
+/* --- Map Elements --- */
+.map-viewport {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+    cursor: grab;
+}
+
+.map-viewport:active { cursor: grabbing; }
+
+.map-container {
+    position: absolute;
+    transform-origin: 0 0;
+    user-select: none;
+    will-change: transform;
+    transition: transform 0.1s ease-out;
+}
+
+.map-container img { display: block; max-width: none; height: auto; }
+
+/* --- Color Coding & Dynamic Pins --- */
+.pin {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    border-radius: 50% 50% 50% 0;
+    transform: translate(-50%, -100%) rotate(-45deg);
+    cursor: pointer;
+    box-shadow: -2px 4px 8px rgba(0,0,0,0.3);
+    border: 2px solid #fff;
+    transition: scale 0.2s ease, opacity 0.3s ease;
+}
+
+.pin:hover { scale: 1.25; }
+
+.pin.hidden-by-filter {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.pin.jumping {
+    animation: markerBounce 0.5s infinite alternate cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes markerBounce {
+    0% { transform: translate(-50%, -100%) rotate(-45deg); }
+    100% { transform: translate(-50%, -130%) rotate(-45deg); }
+}
+
+/* --- Color Selector Layout --- */
+.color-picker { display: flex; gap: 14px; margin-top: 8px; }
+.color-option { cursor: pointer; position: relative; }
+.color-option input { position: absolute; opacity: 0; cursor: pointer; }
+
+.color-dot {
+    display: block;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    transition: var(--transition);
+}
+
+.color-option input:checked + .color-dot {
+    border-color: #111827;
+    transform: scale(1.15);
+    box-shadow: 0 0 0 2px #fff inset;
+}
+
+/* --- Upload Layout States --- */
+.upload-container { margin-top: 6px; }
+
+.file-label {
+    display: block;
+    padding: 10px;
+    background: #eef2ff;
+    border: 1px dashed var(--primary);
+    color: var(--primary);
+    text-align: center;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.file-label:hover { background: #e0e7ff; }
+
+.upload-container input[type="file"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.file-feedback {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    padding: 6px 12px;
+    border-radius: 6px;
+    margin-top: 6px;
+    animation: fadeIn 0.3s ease;
+}
+
+.file-feedback.active { display: flex; }
+.file-name { font-size: 13px; color: #166534; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85%; }
+.btn-remove-file { background: none; border: none; color: #dc2626; font-size: 18px; cursor: pointer; font-weight: bold; padding: 0 4px; }
+
+/* --- UI Controls & Overlay Modals --- */
+.zoom-controls {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 10;
+}
+
+.zoom-controls button {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 24px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: var(--bg-overlay);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: var(--transition);
+    padding: 16px;
+}
+
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+.modal-card {
+    background: var(--surface);
+    width: 100%;
+    max-width: 550px;
+    max-height: 90vh;
+    border-radius: var(--radius);
+    padding: 24px;
+    position: relative;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    overflow-y: auto;
+    transform: translateY(20px) scale(0.95);
+    transition: var(--transition);
+}
+
+.modal-overlay.active .modal-card { transform: translateY(0) scale(1); }
+
+.close-modal {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: #f3f4f6;
+    border: none;
+    font-size: 24px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+h2 { margin-bottom: 16px; color: var(--text); }
+h3 { margin-bottom: 8px; font-size: 1rem; color: #4b5563; }
+.form-section { background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+
+input[type="text"], textarea { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #d1d5db; border-radius: 6px; outline: none; }
+input:focus, textarea:focus { border-color: var(--primary); }
+
+.btn-submit {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-right: 40px; }
+.btn-delete { padding: 6px 14px; background: var(--danger); color: white; border: none; border-radius: 6px; cursor: pointer; }
+.display-img { width: 100%; max-height: 220px; object-fit: cover; border-radius: 6px; margin: 8px 0 12px 0; transition: transform 0.2s; }
+.display-img[src=""], .display-img:not([src]) { display: none !important; }
+
+/* --- NEW: Fullscreen Lightbox Styles --- */
+.lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(10, 15, 30, 0.92);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 200; /* Layers cleanly over top of secondary view cards */
+    opacity: 0;
+    pointer-events: none;
+    transition: var(--transition);
+    padding: 20px;
+}
+
+.lightbox-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.lightbox-overlay img {
+    max-width: 95vw;
+    max-height: 85vh;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    transform: scale(0.95);
+    transition: var(--transition);
+}
+
+.lightbox-overlay.active img {
+    transform: scale(1);
+}
+
+.close-lightbox {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: none;
+    font-size: 32px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.close-lightbox:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+    .modal-card { padding: 16px; max-height: 95vh; }
+    .hamburger-btn { top: 16px; left: 16px; width: 42px; height: 42px; }
+    .close-lightbox { top: 16px; right: 16px; width: 42px; height: 42px; font-size: 26px; }
+}
