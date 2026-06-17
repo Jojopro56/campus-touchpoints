@@ -149,11 +149,30 @@ filterColorSelect.addEventListener('change', (e) => {
     applyActiveFilter(e.target.value);
 });
 
-// NEW: DOWNLOAD LATEST PINS LOGIC (Targets your specific file in root directory)
+// --- DOWNLOAD LATEST PINS LOGIC (GitHub Pages Subfolder Proof) ---
 downloadLatestPinsBtn.addEventListener('click', () => {
+    const fileName = 'custom_map_backup_1781653921851.json';
+    
+    // 1. Get the current browser pathname (e.g., "/your-repo/index.html" or "/your-repo")
+    let currentPath = window.location.pathname;
+    
+    // 2. If the path points to a file (like index.html), strip the filename away
+    if (currentPath.includes('.')) {
+        currentPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+    }
+    
+    // 3. Ensure the path has a trailing slash so the subfolder isn't dropped
+    if (!currentPath.endsWith('/')) {
+        currentPath += '/';
+    }
+    
+    // 4. Combine everything into an absolute URL pointing to your root folder
+    const fileUrl = window.location.origin + currentPath + fileName;
+
+    // Trigger the download secure anchor lifecycle
     const downloadLink = document.createElement('a');
-    downloadLink.href = 'custom_map_backup_1781653921851.json';
-    downloadLink.download = 'custom_map_backup_1781653921851.json';
+    downloadLink.href = fileUrl;
+    downloadLink.download = fileName;
     
     document.body.appendChild(downloadLink);
     downloadLink.click();
