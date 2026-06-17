@@ -14,8 +14,11 @@ const closeDrawerBtn = document.getElementById('closeDrawerBtn');
 const exportMarkersBtn = document.getElementById('exportMarkersBtn');
 const importMarkersBtn = document.getElementById('importMarkersBtn');
 const importFileInput = document.getElementById('importFileInput');
-const filterColorSelect = document.getElementById('filterColorSelect');
 const downloadLatestPinsBtn = document.getElementById('downloadLatestPinsBtn');
+
+// NEW: Timeline DOM System Configuration Elements
+const timelineTrack = document.getElementById('timelineTrack');
+const timelineCards = document.querySelectorAll('.timeline-card');
 
 // Lightbox System DOM Elements
 const lightboxOverlay = document.getElementById('lightboxOverlay');
@@ -47,12 +50,15 @@ let currentViewingPinId = null;
 let loadedLocBase64 = "";
 let loadedSolBase64 = "";
 
-// NEW: Mobile Touch Specific Tracking States
+// Mobile Touch Specific Tracking States
 let initialTouchDist = 0;
 let initialTouchScale = 1;
 let touchMidX = 0;
 let touchMidY = 0;
 let isPinching = false;
+
+// Active Timeline state variable tracking
+let activeTimelineFilterValue = "all";
 
 // --- High Capacity IndexedDB Storage Engine ---
 const DB_NAME = 'InteractiveMapDB';
@@ -139,8 +145,9 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Global Filter Evaluation Engine
+// --- NEW: Global Timeline Engine Mechanics ---
 function applyActiveFilter(selectedColor) {
+    activeTimelineFilterValue = selectedColor;
     const pins = container.querySelectorAll('.pin');
     pins.forEach(pin => {
         const pinColor = pin.getAttribute('data-color');
@@ -152,9 +159,34 @@ function applyActiveFilter(selectedColor) {
     });
 }
 
-filterColorSelect.addEventListener('change', (e) => {
-    applyActiveFilter(e.target.value);
+// Wire Up Click/Tap Listeners on Timeline Elements
+timelineCards.forEach(card => {
+    card.addEventListener('click', () => {
+        // Strip active visibility styles from all cards
+        timelineCards.forEach(c => c.classList.remove('active'));
+        
+        // Apply active background colors to selected target card node
+        card.classList.add('active');
+        
+        // Apply map layer visibility filter rules instantly
+        const targetColor = card.getAttribute('data-filter');
+        applyActiveFilter(targetColor);
+
+        // Smoothly center focus over the tapped item horizontally (great for mobile views)
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    });
 });
+
+// Utility to cleanly auto-reset the UI view state back to overview safely
+function resetTimelineToOverview() {
+    timelineCards.forEach(c => c.classList.remove('active'));
+    const overviewCard = timelineTrack.querySelector('[data-filter="all"]');
+    if (overviewCard) {
+        overviewCard.classList.add('active');
+        overviewCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+    applyActiveFilter('all');
+}
 
 // DOWNLOAD LATEST PINS LOGIC (GitHub Pages Subfolder Proof)
 downloadLatestPinsBtn.addEventListener('click', () => {
@@ -226,7 +258,8 @@ importFileInput.addEventListener('change', (e) => {
                 return;
             }
 
-            filterColorSelect.value = "all";
+            // Force view reset on layout import sequences so newly arrived data is fully visible
+            resetTimelineToOverview();
 
             for (const marker of importedMarkers) {
                 if (marker.id && marker.x !== undefined && marker.y !== undefined) {
@@ -248,7 +281,6 @@ importFileInput.addEventListener('change', (e) => {
                 }
             }
 
-            applyActiveFilter('all');
             alert("🎉 All markers imported successfully!");
             importFileInput.value = "";
             sideMenuDrawer.classList.remove('active');
@@ -290,10 +322,14 @@ viewport.addEventListener('wheel', (e) => {
     zoom(e.deltaY < 0 ? 0.2 : -0.2, e.clientX - rect.left, e.clientY - rect.top);
 }, { passive: false });
 
-// --- DESKTOP ONLY Panning Setup (Ignores mobile touch conflicts) ---
+// --- DESKTOP ONLY Panning Setup ---
 viewport.addEventListener('pointerdown', (e) => {
-    if (e.pointerType !== 'mouse') return; // Pass execution cleanly off to our Touch handlers on mobile
-    if (e.target.classList.contains('pin') || e.target.closest('.zoom-controls') || e.target.closest('#sideMenuDrawer') || e.target.closest('#hamburgerMenuBtn')) return;
+    if (e.pointerType !== 'mouse') return; 
+    if (e.target.classList.contains('pin') || 
+        e.target.closest('.zoom-controls') || 
+        e.target.closest('#sideMenuDrawer') || 
+        e.target.closest('#hamburgerMenuBtn') ||
+        e.target.closest('.timeline-viewport')) return; // Ignore click dragging if user intercepts timeline panel
 
     isDragging = true;
     isClickAction = true;
@@ -320,11 +356,15 @@ viewport.addEventListener('pointerup', (e) => {
 });
 
 
-// --- NEW: HIGH PERFORMANCE MOBILE TOUCH & GESTURE ENGINE (Pinch-to-Zoom + Lagless Swiping) ---
+// --- HIGH PERFORMANCE MOBILE TOUCH & GESTURE ENGINE ---
 viewport.addEventListener('touchstart', (e) => {
-    if (e.target.classList.contains('pin') || e.target.closest('.zoom-controls') || e.target.closest('#sideMenuDrawer') || e.target.closest('#hamburgerMenuBtn')) return;
+    if (e.target.classList.contains('pin') || 
+        e.target.closest('.zoom-controls') || 
+        e.target.closest('#sideMenuDrawer') || 
+        e.target.closest('#hamburgerMenuBtn') ||
+        e.target.closest('.timeline-viewport')) return;
 
-    viewport.classList.add('is-dragging'); // Instantly drops CSS transition lags
+    viewport.classList.add('is-dragging'); 
     isClickAction = true;
 
     if (e.touches.length === 1) {
@@ -335,14 +375,13 @@ viewport.addEventListener('touchstart', (e) => {
     } else if (e.touches.length === 2) {
         isDragging = false;
         isPinching = true;
-        isClickAction = false; // Block placement when pinching
+        isClickAction = false; 
         
         const t1 = e.touches[0];
         const t2 = e.touches[1];
         initialTouchDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
         initialTouchScale = scale;
 
-        // Establish the midpoint between two fingers to zoom directly into that map spot
         const rect = viewport.getBoundingClientRect();
         touchMidX = ((t1.clientX + t2.clientX) / 2) - rect.left;
         touchMidY = ((t1.clientY + t2.clientY) / 2) - rect.top;
@@ -351,7 +390,7 @@ viewport.addEventListener('touchstart', (e) => {
 
 viewport.addEventListener('touchmove', (e) => {
     if (!isDragging && !isPinching) return;
-    e.preventDefault(); // Lock mobile screen elastic viewport bounces
+    e.preventDefault(); 
 
     isClickAction = false;
 
@@ -372,7 +411,6 @@ viewport.addEventListener('touchmove', (e) => {
             
             scale = Math.min(Math.max(initialTouchScale * factor, minScale), maxScale);
 
-            // Dynamically translate pan offsets around the active pinch center point
             const xs = (touchMidX - panX) / oldScale;
             const ys = (touchMidY - panY) / oldScale;
             panX = touchMidX - xs * scale;
@@ -386,7 +424,6 @@ viewport.addEventListener('touchmove', (e) => {
 viewport.addEventListener('touchend', (e) => {
     viewport.classList.remove('is-dragging');
     
-    // Route clean single finger taps directly into a placement modal trigger
     if (isClickAction && e.touches.length === 0 && e.changedTouches.length > 0) {
         const fakePointerEvent = {
             clientX: e.changedTouches[0].clientX,
@@ -399,7 +436,6 @@ viewport.addEventListener('touchend', (e) => {
     isPinching = false;
     initialTouchDist = 0;
 
-    // Fluid continuation: If one finger remains on screen, recalculate coordinates to prevent jumping
     if (e.touches.length === 1) {
         isDragging = true;
         startX = e.touches[0].clientX - panX;
@@ -506,8 +542,8 @@ markerForm.addEventListener('submit', async (e) => {
     newMarker.isJumping = true; 
     renderPin(newMarker);
 
-    filterColorSelect.value = "all";
-    applyActiveFilter('all');
+    // Forces timeline reset back to overview when adding new markers so they don't look hidden
+    resetTimelineToOverview();
 
     closeModal(formModal);
 });
@@ -527,7 +563,8 @@ function renderPin(markerObj) {
         pin.classList.add('jumping');
     }
 
-    if (filterColorSelect.value !== 'all' && markerObj.color !== filterColorSelect.value) {
+    // Evaluates dynamic placement filters to hide/show pins according to active timeline step
+    if (activeTimelineFilterValue !== 'all' && markerObj.color !== activeTimelineFilterValue) {
         pin.classList.add('hidden-by-filter');
     }
 
@@ -650,7 +687,7 @@ document.getElementById('removeAllPins').addEventListener('click', async () => {
         const activePins = container.querySelectorAll('.pin');
         activePins.forEach(pin => pin.remove());
         
-        filterColorSelect.value = "all";
+        resetTimelineToOverview();
         sideMenuDrawer.classList.remove('active');
     }
 });

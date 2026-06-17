@@ -19,20 +19,6 @@
         <h2>Map Toolkit</h2>
         
         <div class="drawer-content">
-            <div class="drawer-section">
-                <h3>🔍 Filter Pins by Color</h3>
-                <select id="filterColorSelect" class="select-drawer">
-                    <option value="all">🎨 Show All Colors</option>
-                    <option value="#dc2626">🔴 Red Only</option>
-                    <option value="#2563eb">🔵 Blue Only</option>
-                    <option value="#16a34a">🟢 Green Only</option>
-                    <option value="#ca8a04">🟡 Yellow Only</option>
-                    <option value="#9333ea">🟣 Purple Only</option>
-                </select>
-            </div>
-
-            <hr class="drawer-divider">
-
             <button id="downloadLatestPinsBtn" class="btn-drawer">📌 Download Latest Pins</button>
             <button id="exportMarkersBtn" class="btn-drawer">📤 Export Markers</button>
             <button id="importMarkersBtn" class="btn-drawer">📥 Import Markers</button>
@@ -53,6 +39,53 @@
     <div class="zoom-controls">
         <button id="zoomIn">+</button>
         <button id="zoomOut">-</button>
+    </div>
+
+    <div class="timeline-viewport">
+        <div class="timeline-track" id="timelineTrack">
+            <div class="timeline-card active" data-filter="all">
+                <span class="timeline-card-dot" style="background-color: #9ca3af;"></span>
+                <div class="timeline-card-info">
+                    <h4>Overview</h4>
+                    <p>Show All Markers</p>
+                </div>
+            </div>
+            <div class="timeline-card" data-filter="#dc2626">
+                <span class="timeline-card-dot" style="background-color: #dc2626;"></span>
+                <div class="timeline-card-info">
+                    <h4>Step 1</h4>
+                    <p>Signing up for Northwest</p>
+                </div>
+            </div>
+            <div class="timeline-card" data-filter="#2563eb">
+                <span class="timeline-card-dot" style="background-color: #2563eb;"></span>
+                <div class="timeline-card-info">
+                    <h4>Step 2</h4>
+                    <p>Arriving on campus</p>
+                </div>
+            </div>
+            <div class="timeline-card" data-filter="#16a34a">
+                <span class="timeline-card-dot" style="background-color: #16a34a;"></span>
+                <div class="timeline-card-info">
+                    <h4>Step 3</h4>
+                    <p>First year on campus</p>
+                </div>
+            </div>
+            <div class="timeline-card" data-filter="#ca8a04">
+                <span class="timeline-card-dot" style="background-color: #ca8a04;"></span>
+                <div class="timeline-card-info">
+                    <h4>Step 4</h4>
+                    <p>On campus events</p>
+                </div>
+            </div>
+            <div class="timeline-card" data-filter="#9333ea">
+                <span class="timeline-card-dot" style="background-color: #9333ea;"></span>
+                <div class="timeline-card-info">
+                    <h4>Step 5</h4>
+                    <p>On campus</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="modal-overlay" id="formModal">
