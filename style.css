@@ -140,13 +140,14 @@ body, html {
 .drawer-divider { border: 0; height: 1px; background: #e5e7eb; margin: 12px 0; }
 #importFileInput { display: none; }
 
-/* --- Map Elements --- */
+/* --- Map Elements & Viewport Configuration --- */
 .map-viewport {
     width: 100vw;
     height: 100vh;
     position: relative;
     overflow: hidden;
     cursor: grab;
+    touch-action: none; /* Prevents browser default multi-finger panning interferences */
 }
 
 .map-viewport:active { cursor: grabbing; }
@@ -156,10 +157,15 @@ body, html {
     transform-origin: 0 0;
     user-select: none;
     will-change: transform;
-    transition: transform 0.1s ease-out;
+    transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); /* Keeps smooth snap for button clicks */
 }
 
 .map-container img { display: block; max-width: none; height: auto; }
+
+/* FIX: Strips transitions completely when active panning or pinching occurs */
+.map-viewport.is-dragging .map-container {
+    transition: none !important;
+}
 
 /* --- Color Coding & Dynamic Pins --- */
 .pin {

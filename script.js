@@ -15,7 +15,7 @@ const exportMarkersBtn = document.getElementById('exportMarkersBtn');
 const importMarkersBtn = document.getElementById('importMarkersBtn');
 const importFileInput = document.getElementById('importFileInput');
 const filterColorSelect = document.getElementById('filterColorSelect');
-const downloadLatestPinsBtn = document.getElementById('downloadLatestPinsBtn'); // NEW
+const downloadLatestPinsBtn = document.getElementById('downloadLatestPinsBtn');
 
 // Lightbox System DOM Elements
 const lightboxOverlay = document.getElementById('lightboxOverlay');
@@ -46,6 +46,13 @@ let currentViewingPinId = null;
 
 let loadedLocBase64 = "";
 let loadedSolBase64 = "";
+
+// NEW: Mobile Touch Specific Tracking States
+let initialTouchDist = 0;
+let initialTouchScale = 1;
+let touchMidX = 0;
+let touchMidY = 0;
+let isPinching = false;
 
 // --- High Capacity IndexedDB Storage Engine ---
 const DB_NAME = 'InteractiveMapDB';
@@ -149,27 +156,20 @@ filterColorSelect.addEventListener('change', (e) => {
     applyActiveFilter(e.target.value);
 });
 
-// --- DOWNLOAD LATEST PINS LOGIC (GitHub Pages Subfolder Proof) ---
+// DOWNLOAD LATEST PINS LOGIC (GitHub Pages Subfolder Proof)
 downloadLatestPinsBtn.addEventListener('click', () => {
     const fileName = 'custom_map_backup_1781653921851.json';
-    
-    // 1. Get the current browser pathname (e.g., "/your-repo/index.html" or "/your-repo")
     let currentPath = window.location.pathname;
     
-    // 2. If the path points to a file (like index.html), strip the filename away
     if (currentPath.includes('.')) {
         currentPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
     }
-    
-    // 3. Ensure the path has a trailing slash so the subfolder isn't dropped
     if (!currentPath.endsWith('/')) {
         currentPath += '/';
     }
     
-    // 4. Combine everything into an absolute URL pointing to your root folder
     const fileUrl = window.location.origin + currentPath + fileName;
 
-    // Trigger the download secure anchor lifecycle
     const downloadLink = document.createElement('a');
     downloadLink.href = fileUrl;
     downloadLink.download = fileName;
@@ -290,22 +290,21 @@ viewport.addEventListener('wheel', (e) => {
     zoom(e.deltaY < 0 ? 0.2 : -0.2, e.clientX - rect.left, e.clientY - rect.top);
 }, { passive: false });
 
-// --- Drag & Drop Interaction Engine ---
+// --- DESKTOP ONLY Panning Setup (Ignores mobile touch conflicts) ---
 viewport.addEventListener('pointerdown', (e) => {
-    if(e.target.classList.contains('pin') || 
-       e.target.closest('.zoom-controls') || 
-       e.target.closest('#sideMenuDrawer') || 
-       e.target.closest('#hamburgerMenuBtn')) return;
+    if (e.pointerType !== 'mouse') return; // Pass execution cleanly off to our Touch handlers on mobile
+    if (e.target.classList.contains('pin') || e.target.closest('.zoom-controls') || e.target.closest('#sideMenuDrawer') || e.target.closest('#hamburgerMenuBtn')) return;
 
     isDragging = true;
     isClickAction = true;
+    viewport.classList.add('is-dragging');
     startX = e.clientX - panX;
     startY = e.clientY - panY;
     viewport.setPointerCapture(e.pointerId);
 });
 
 viewport.addEventListener('pointermove', (e) => {
-    if (!isDragging) return;
+    if (e.pointerType !== 'mouse' || !isDragging) return;
     isClickAction = false;
     panX = e.clientX - startX;
     panY = e.clientY - startY;
@@ -313,11 +312,101 @@ viewport.addEventListener('pointermove', (e) => {
 });
 
 viewport.addEventListener('pointerup', (e) => {
-    if (!isDragging) return;
+    if (e.pointerType !== 'mouse' || !isDragging) return;
     isDragging = false;
+    viewport.classList.remove('is-dragging');
     viewport.releasePointerCapture(e.pointerId);
     if (isClickAction) handleMapClick(e);
 });
+
+
+// --- NEW: HIGH PERFORMANCE MOBILE TOUCH & GESTURE ENGINE (Pinch-to-Zoom + Lagless Swiping) ---
+viewport.addEventListener('touchstart', (e) => {
+    if (e.target.classList.contains('pin') || e.target.closest('.zoom-controls') || e.target.closest('#sideMenuDrawer') || e.target.closest('#hamburgerMenuBtn')) return;
+
+    viewport.classList.add('is-dragging'); // Instantly drops CSS transition lags
+    isClickAction = true;
+
+    if (e.touches.length === 1) {
+        isDragging = true;
+        isPinching = false;
+        startX = e.touches[0].clientX - panX;
+        startY = e.touches[0].clientY - panY;
+    } else if (e.touches.length === 2) {
+        isDragging = false;
+        isPinching = true;
+        isClickAction = false; // Block placement when pinching
+        
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        initialTouchDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        initialTouchScale = scale;
+
+        // Establish the midpoint between two fingers to zoom directly into that map spot
+        const rect = viewport.getBoundingClientRect();
+        touchMidX = ((t1.clientX + t2.clientX) / 2) - rect.left;
+        touchMidY = ((t1.clientY + t2.clientY) / 2) - rect.top;
+    }
+}, { passive: false });
+
+viewport.addEventListener('touchmove', (e) => {
+    if (!isDragging && !isPinching) return;
+    e.preventDefault(); // Lock mobile screen elastic viewport bounces
+
+    isClickAction = false;
+
+    if (e.touches.length === 1 && isDragging) {
+        panX = e.touches[0].clientX - startX;
+        panY = e.touches[0].clientY - startY;
+        updateTransform();
+    } else if (e.touches.length === 2 && isPinching) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const currentDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        
+        if (initialTouchDist > 0) {
+            const factor = currentDist / initialTouchDist;
+            const minScale = 0.5;
+            const maxScale = 4;
+            const oldScale = scale;
+            
+            scale = Math.min(Math.max(initialTouchScale * factor, minScale), maxScale);
+
+            // Dynamically translate pan offsets around the active pinch center point
+            const xs = (touchMidX - panX) / oldScale;
+            const ys = (touchMidY - panY) / oldScale;
+            panX = touchMidX - xs * scale;
+            panY = touchMidY - ys * scale;
+            
+            updateTransform();
+        }
+    }
+}, { passive: false });
+
+viewport.addEventListener('touchend', (e) => {
+    viewport.classList.remove('is-dragging');
+    
+    // Route clean single finger taps directly into a placement modal trigger
+    if (isClickAction && e.touches.length === 0 && e.changedTouches.length > 0) {
+        const fakePointerEvent = {
+            clientX: e.changedTouches[0].clientX,
+            clientY: e.changedTouches[0].clientY
+        };
+        handleMapClick(fakePointerEvent);
+    }
+
+    isDragging = false;
+    isPinching = false;
+    initialTouchDist = 0;
+
+    // Fluid continuation: If one finger remains on screen, recalculate coordinates to prevent jumping
+    if (e.touches.length === 1) {
+        isDragging = true;
+        startX = e.touches[0].clientX - panX;
+        startY = e.touches[0].clientY - panY;
+    }
+});
+
 
 function handleMapClick(e) {
     const rect = container.getBoundingClientRect();
