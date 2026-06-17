@@ -190,7 +190,7 @@ function resetTimelineToOverview() {
 
 // DOWNLOAD LATEST PINS LOGIC (GitHub Pages Subfolder Proof)
 downloadLatestPinsBtn.addEventListener('click', () => {
-    const fileName = 'custom_map_backup_1781653921851.json';
+    const fileName = 'custom_map_backup_1781692358983.json';
     let currentPath = window.location.pathname;
     
     if (currentPath.includes('.')) {
