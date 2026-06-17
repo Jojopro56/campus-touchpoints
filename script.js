@@ -15,8 +15,9 @@ const exportMarkersBtn = document.getElementById('exportMarkersBtn');
 const importMarkersBtn = document.getElementById('importMarkersBtn');
 const importFileInput = document.getElementById('importFileInput');
 const filterColorSelect = document.getElementById('filterColorSelect');
+const downloadLatestPinsBtn = document.getElementById('downloadLatestPinsBtn'); // NEW
 
-// NEW: Lightbox System DOM Elements
+// Lightbox System DOM Elements
 const lightboxOverlay = document.getElementById('lightboxOverlay');
 const lightboxImg = document.getElementById('lightboxImg');
 const closeLightboxBtn = document.getElementById('closeLightboxBtn');
@@ -146,6 +147,19 @@ function applyActiveFilter(selectedColor) {
 
 filterColorSelect.addEventListener('change', (e) => {
     applyActiveFilter(e.target.value);
+});
+
+// NEW: DOWNLOAD LATEST PINS LOGIC (Targets your specific file in root directory)
+downloadLatestPinsBtn.addEventListener('click', () => {
+    const downloadLink = document.createElement('a');
+    downloadLink.href = 'custom_map_backup_1781653921851.json';
+    downloadLink.download = 'custom_map_backup_1781653921851.json';
+    
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    
+    sideMenuDrawer.classList.remove('active');
 });
 
 // --- EXPORT MARKERS LOGIC ---
@@ -350,10 +364,10 @@ function closeModal(modal) {
     });
 });
 
-// NEW: Lightbox Event Close Utilities
+// Lightbox Event Close Utilities
 function closeLightbox() {
     lightboxOverlay.classList.remove('active');
-    setTimeout(() => { lightboxImg.src = ""; }, 300); // clear image safely post-fadeout transition
+    setTimeout(() => { lightboxImg.src = ""; }, 300); 
 }
 lightboxOverlay.addEventListener('click', (e) => {
     if (e.target === lightboxOverlay || e.target.id === 'closeLightboxBtn') closeLightbox();
@@ -430,7 +444,6 @@ function showPinDetails(id) {
 
     currentViewingPinId = id;
 
-    // 1. Manage Location Section Text & Image Fallbacks
     document.getElementById('viewLocTitle').textContent = marker.locTitle;
     
     const viewLocDescEl = document.getElementById('viewLocDesc');
@@ -447,17 +460,16 @@ function showPinDetails(id) {
         viewLocImgEl.style.display = "block";
         viewLocImgEl.style.cursor = "zoom-in";
     } else {
-        viewLocImgEl.removeAttribute('src'); // clears layout
+        viewLocImgEl.removeAttribute('src'); 
     }
 
-    // 2. Manage Solution Section Responsiveness
     const hasSolutionData = (marker.solTitle.trim() !== "" || marker.solDesc.trim() !== "" || marker.solImgUrl);
     const dividerEl = document.querySelector('.divider');
-    const solBlockEl = document.getElementById('viewSolBlock');
+    const viewSolBlockEl = document.getElementById('viewSolBlock');
 
     if (hasSolutionData) {
         if (dividerEl) dividerEl.style.display = "block";
-        solBlockEl.style.display = "block";
+        viewSolBlockEl.style.display = "block";
 
         const viewSolTitleEl = document.getElementById('viewSolTitle');
         if (marker.solTitle.trim() !== "") {
@@ -485,13 +497,13 @@ function showPinDetails(id) {
         }
     } else {
         if (dividerEl) dividerEl.style.display = "none";
-        solBlockEl.style.display = "none";
+        viewSolBlockEl.style.display = "none";
     }
 
     openModal(viewModal);
 }
 
-// NEW: Wire Up Click Action Hooks on display images to engage Fullscreen Lightbox Mode
+// Wire Up Click Action Hooks on display images to engage Fullscreen Lightbox Mode
 [document.getElementById('viewLocImg'), document.getElementById('viewSolImg')].forEach(imgElement => {
     imgElement.addEventListener('click', function() {
         if (this.src && this.getAttribute('src') !== "") {

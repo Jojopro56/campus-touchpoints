@@ -357,7 +357,7 @@ input:focus, textarea:focus { border-color: var(--primary); }
 .display-img { width: 100%; max-height: 220px; object-fit: cover; border-radius: 6px; margin: 8px 0 12px 0; transition: transform 0.2s; }
 .display-img[src=""], .display-img:not([src]) { display: none !important; }
 
-/* --- NEW: Fullscreen Lightbox Styles --- */
+/* Fullscreen Lightbox Styles */
 .lightbox-overlay {
     position: fixed;
     top: 0;
@@ -369,17 +369,14 @@ input:focus, textarea:focus { border-color: var(--primary); }
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 200; /* Layers cleanly over top of secondary view cards */
+    z-index: 200;
     opacity: 0;
     pointer-events: none;
     transition: var(--transition);
     padding: 20px;
 }
 
-.lightbox-overlay.active {
-    opacity: 1;
-    pointer-events: auto;
-}
+.lightbox-overlay.active { opacity: 1; pointer-events: auto; }
 
 .lightbox-overlay img {
     max-width: 95vw;
@@ -391,9 +388,7 @@ input:focus, textarea:focus { border-color: var(--primary); }
     transition: var(--transition);
 }
 
-.lightbox-overlay.active img {
-    transform: scale(1);
-}
+.lightbox-overlay.active img { transform: scale(1); }
 
 .close-lightbox {
     position: absolute;
@@ -413,9 +408,7 @@ input:focus, textarea:focus { border-color: var(--primary); }
     transition: var(--transition);
 }
 
-.close-lightbox:hover {
-    background: rgba(255, 255, 255, 0.3);
-}
+.close-lightbox:hover { background: rgba(255, 255, 255, 0.3); }
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-4px); }
